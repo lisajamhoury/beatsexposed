@@ -1,6 +1,9 @@
 //serial variables
 var serial; // variable to hold an instance of the serialport library
-var portName = '/dev/cu.usbserial-DA01ILEZ'; // fill in your serial port name here
+var portName = '/dev/cu.usbserial-DA01IC2S'; // fill in your serial port name here
+
+//websocket variables 
+var socket;
 
 //global color variables 
 var color1 = 0;
@@ -49,7 +52,18 @@ function setup() {
   smooth();
   noStroke();
   heartbeat.setVolume(0.8);
-  
+
+  // Start a socket connection to the server
+  socket =io.connect('http://localhost:8080');
+
+  // Socket plays sound when it hears 'heartbeat' from server
+  socket.on('heartbeat', function(data) {
+    heartbeat.play(); 
+    console.log('played');
+  } );
+
+
+
   serial = new p5.SerialPort(); // make a new instance of the serialport library
   // serial.on('list', printList); // set a callback function for the serialport list event
   serial.on('connected', serverConnected); // callback for connecting to the server
@@ -94,7 +108,7 @@ function serialEvent() {
         if ( myID === '(1)') {
           heart = sensors[1];
           breath = sensors[2];
-          // console.log(myID + ", " + heart + ", " + breath);
+          console.log(myID + ", " + heart + ", " + breath);
       }
     }
   }
@@ -114,7 +128,8 @@ function portClose() {
 function draw() {
   
   if (millis() >= timestamp + 350 && heart == 1) {
-    heartbeat.play();
+    socket.emit('click', {});
+    console.log('heart is 1');
     timestamp = millis();
   }
  
