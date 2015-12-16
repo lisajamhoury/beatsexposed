@@ -41,9 +41,9 @@ var posX = 0;
 var posY = 0;
 
 
-function preload() {
-  heartbeat = loadSound('assets/beat.mp3');
-}
+// function preload() {
+//  heartbeat = loadSound('assets/beat.mp3');
+// }
 
 
 function setup() {
@@ -51,17 +51,17 @@ function setup() {
   
   smooth();
   noStroke();
-  heartbeat.setVolume(0.8);
+  // heartbeat.setVolume(0.8);
 
   // Start a socket connection to the server
   socket =io.connect('http://' + document.location.host);
 
 
   // Socket plays sound when it hears 'heartbeat' from server
-  socket.on('heartbeat', function(data) {
-    heartbeat.play(); 
-    console.log('played');
-  } );
+  // socket.on('heartbeat', function(data) {
+  //   heartbeat.play(); 
+  //   console.log('played');
+  // } );
 
 
 
