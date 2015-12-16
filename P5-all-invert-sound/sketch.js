@@ -54,7 +54,8 @@ function setup() {
   heartbeat.setVolume(0.8);
 
   // Start a socket connection to the server
-  socket =io.connect('http://localhost:8080');
+  socket =io.connect('http://' + document.location.host);
+
 
   // Socket plays sound when it hears 'heartbeat' from server
   socket.on('heartbeat', function(data) {
