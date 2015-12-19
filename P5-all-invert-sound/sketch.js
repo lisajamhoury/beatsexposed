@@ -18,6 +18,7 @@ var heartbeat;
 var myID = 0;
 var heart = 0;
 var breath = 0;
+var prevHeart = 0;
 
 //ball variables
 var start = 500;
@@ -32,7 +33,6 @@ var state = 'ascending';
 //flower variables 
 var blendModeState = 'on';
 
-
 //particles variables
 var beat = 2;
 var r = 0; //radius
@@ -40,11 +40,35 @@ var angle = 0;
 var posX = 0;
 var posY = 0;
 
+//double random
+var totalPts = 300;
+var steps = totalPts + 1;
 
-// function preload() {
-//  heartbeat = loadSound('assets/beat.mp3');
-// }
+//noiseSurge variables
+var noiseSurge;
+var xoff = 0.0;
+var xincrement = 0.005;
+var heartX;
 
+//glow variables
+var otreeimg;
+var treeimg;
+var tree;
+var ringsimg;
+
+//growing
+var circles = [];
+var cCount = 0;
+var pHeart = 0;
+var pastTime = 0;
+
+
+
+function preload() {
+  treeimg = loadImage('assets/treerings2.png');
+  ringsimg = loadImage('assets/rings.png');
+  otreeimg = loadImage('assets/otree.png');
+}
 
 function setup() {
   createCanvas(1920, 1080);
@@ -57,16 +81,7 @@ function setup() {
   socket =io.connect('http://' + document.location.host);
 
 
-  // Socket plays sound when it hears 'heartbeat' from server
-  // socket.on('heartbeat', function(data) {
-  //   heartbeat.play(); 
-  //   console.log('played');
-  // } );
-
-
-
   serial = new p5.SerialPort(); // make a new instance of the serialport library
-  // serial.on('list', printList); // set a callback function for the serialport list event
   serial.on('connected', serverConnected); // callback for connecting to the server
   serial.on('open', portOpen); // callback for the port opening
   serial.on('data', serialEvent); // callback for when new data arrives
@@ -80,15 +95,6 @@ function setup() {
 
 /////////////////////////// Serial Functions ///////////////////////////
 
-
-// get the list of ports:
-function printList(portList) {
-  // portList is an array of serial port names
-  for (var i = 0; i < portList.length; i++) {
-    // Display the list the console:
-    println(i + " " + portList[i]);
-  }
-}
 
 function serverConnected() {
   println('connected to server.'); }
@@ -109,7 +115,12 @@ function serialEvent() {
         if ( myID === '(1)') {
           heart = sensors[1];
           breath = sensors[2];
-          console.log(myID + ", " + heart + ", " + breath);
+          if (heart === "1" && prevHeart === "0"){
+            socket.emit('click', {});
+            console.log('heart is 1');
+          }
+          prevHeart = heart;
+          // console.log(myID + ", " + heart + ", " + breath);
       }
     }
   }
@@ -128,29 +139,39 @@ function portClose() {
 
 function draw() {
   
-  if (millis() >= timestamp + 350 && heart == 1) {
-    socket.emit('click', {});
-    console.log('heart is 1');
-    timestamp = millis();
-  }
- 
-  
   if (key == 1) {
-    ball();  
+    growing();
+  } else if (key == 2) {
+    flower();
+  } else if (key == 3) {
+    tree();
+  } else if (key == 4) {
+    ball();
+  } else if (key == 5) {
+    particles();
+  }else if (key == 6)  {
+    doubleRandom();
+  } else if (key == 7) {
+    doubleRandom2();
+  } else if (key == 8) {
+    doubleRandom3();
+  } else if (key == 9) {
+    bezierLines();
   }
-  
-  if (key == 2) {
-    flower();  
+  else {
+    growing();
   }
-  
-  if (key == 3) {
-    particles();  
+  if (key != 1) {
+    circles = [];
   }
-  
-  if (key == 4) {
-    bezierLines();  
+
+    if (mouseIsPressed) {
+    imageMode(INVERT);
   }
-  
+}
+
+function keyPressed() {
+  growingReset();
 }
 
 function mousePressed() {
@@ -171,6 +192,62 @@ function mousePressed() {
   //   value = 0;
   // }
 }
+
+
+//////////////////////////////////////////////////////// growing ////
+
+function growing() {
+  background(0, 10);
+  // when heart beats
+  if (heart == 1 && pHeart == 0) {
+    cCount++;
+    // every two heart beat creates a circle
+    if (cCount == 2) {
+      cCount = 0;
+      circles.push(new Circle());
+    }
+  }
+
+  push();
+  translate(width / 2, height / 2);
+  rotate(frameCount * 0.03);
+  for (var i = 0; i < circles.length; i++) {
+    circles[i].run();
+  }
+  pop();
+
+  pHeart = heart;
+}
+
+function growingReset() {
+  pastTime = frameCount;
+}
+
+function Circle() {
+  this.x = random(-(frameCount - pastTime) / 6, (frameCount - pastTime) / 6);
+  this.y = random(-(frameCount - pastTime) / 6, (frameCount - pastTime) / 6);
+  this.initSize = random(2, 6);
+  this.size = this.initSize;
+
+  this.run = function() {
+    if (heart == 1) {
+      this.size = lerp(this.size, this.initSize * 10, 0.1);
+    } else {
+      this.size = lerp(this.size, this.initSize, 0.05);
+    }
+
+    push();
+    fill(255, 50);
+    noStroke();
+    ellipse(this.x, this.y, this.size, this.size);
+    ellipse(this.x, this.y, this.size/2, this.size/2);
+    ellipse(this.x, this.y, this.size/3, this.size/3);
+    pop();
+  }
+}
+
+
+//////////////////////////////////////////////////////// ball ////
 
 
 function ball() {
@@ -200,6 +277,9 @@ function ball() {
   
 }
 
+////////////////////////////flower/////////////////////////
+
+
 function flower() {
   angleMode(RADIANS);
   // frameRate(10);
@@ -228,6 +308,9 @@ function flower() {
     ellipse(random(100,250), random(0,5), random(sinValue,sinValue+10)*4+variant, sinValue + random(10));
   }
 }
+
+//////////////////////////////particles///////////////////////////////
+
 
 function particles() {
   angleMode(DEGREES);
@@ -273,6 +356,9 @@ function particles() {
   }
 
 }
+
+////////////////////////////bezierlines////////////////////////////////////
+
 
 function bezierLines() {
   angleMode(RADIANS);
@@ -327,6 +413,131 @@ function bezierLines() {
       controlPointX2, controlPointY2,
       pointX2, pointY2
     );
+  }
+}
+
+///////////////lerpped//////////////////////////////
+
+function lerpped() { ///lerp(start, stop, amt);
+  var lerped;
+  var increasing;
+  background(0, 10, 10, 20);
+  noFill();
+  stroke(255);
+
+  var circle = 0;
+  //var target = random(3000, 3500);
+  var target = 1000;
+  var lerpAmt = .3;
+  //var origin = random(100, 120);
+  var origin = 120;
+  var size = origin;
+
+  if (heart == 1) {
+    //for (var y = 0; y > 1000; y+10) {
+    size = lerp(size, target, lerpAmt);
+    //}
+  }
+  if (heart == 0) {
+
+    size = lerp(size, origin, lerpAmt);
+  }
+  fill(100, 100, 100, 20);
+  stroke(100);
+  strokeWeight(random(5));
+  ellipse(width / 2, height / 2, size, size);
+
+}
+
+var tsize = 100;
+var tangle = 0;
+
+////////////////////////tree/////////////////////////
+
+function tree() {
+
+  background(10, 10, 10, 20);
+  //lerp(start, stop, amt);
+  // var target = random(4000, 4500);
+  // var lerpAmt = .2;
+  var target = 1000;
+  var lerpAmt = 0.05;
+  var origin = random(90, 300);
+  //var size = origin;
+
+  if (heart == 1) {
+    //for (var y = 0; y > 1000; y+10) {
+    tsize = lerp(tsize, target, lerpAmt);
+    //}
+  }
+  if (heart == 0) {
+    tsize = lerp(tsize, origin, lerpAmt);
+  }
+  tangle = tangle + heart * 0.05;
+
+  push();
+  translate(width / 2, height / 2);
+  rotate(tangle + frameCount * 0.0005);
+  fill(10, 10, 10, 20);
+  stroke(100);
+  strokeWeight(random(5));
+  blendMode(LIGHTEST);
+  imageMode(CENTER);
+  image(treeimg, 0, 0, tsize, tsize)
+    //ellipse(0, 0, size, size);
+  image(treeimg, 0, 0, tsize, tsize) 
+  image(otreeimg, 0, 0, tsize+500, tsize+500)
+  pop();
+}
+
+///////////////////////////////doubleRandom///////////////
+/// based off Ira Greenberg processing code double random
+
+function doubleRandom() {
+  background(color1, 20);
+  stroke(color2);
+  fill(color2);
+  var rand = 0;
+  for (var i = 1; i < steps; i++) {
+    point((width/steps) * i, (height / 2) + random(-rand, rand));
+    rand = heart*random(-500, 500);
+  }
+}
+
+////////////////////////////doubleRandom2///////////////////
+
+function doubleRandom2() {
+  background(color1, 20);
+  stroke(color2);
+  fill(color2);
+  var rand = 0;
+  for (var i = 1; i < steps; i++) {
+    point((width/steps) * i, (height / 2) + random(-rand, rand), 10, 10);
+    rand = heart*random(-400, 400);
+    
+     ellipse((width/steps) * i, (height / 2) + random(-rand, rand), 10, 10);
+    rand = heart*random(-100, 100);
+    
+     point((width/steps) * i, (height / 2) + random(-rand, rand), 10, 10);
+    rand = heart*random(-400, 400);
+  }
+}
+////////////////////////////////doubleRandom3///////////////////
+
+function doubleRandom3() {
+  background(color1, 10);
+  stroke(color2);
+  fill(color2);
+  var rand = 0;
+  for (var i = 1; i < steps; i++) {
+    point((width/steps) * i, ((height / 2)+300) + random(-rand, rand), 10, 10);
+    rand = heart*random(-100, 100);
+    
+     ellipse((width/steps) * i, (height / 2) + random(-rand, rand), 10, 10);
+    rand = heart*random(-200, 200);
+    
+     point((width/steps) * i, ((height / 2)-300) + random(-rand, rand), 10, 10);
+    rand = heart*random(-100, 100);
   }
 }
 
