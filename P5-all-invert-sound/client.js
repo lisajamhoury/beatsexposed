@@ -7,7 +7,7 @@ function preload() {
 }
 
 function setup() {
-  heartbeat.setVolume(0.8);
+  heartbeat.setVolume(1.0);
 
   // Socket plays sound when it hears 'heartbeat' from server
   socket.on('heartbeat', function(data) {
