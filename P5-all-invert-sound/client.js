@@ -3,7 +3,7 @@ var heartbeat;
 var socket =io.connect('http://' + document.location.host);
 
 function preload() {
-  heartbeat = loadSound('assets/beat.wav');
+  heartbeat = loadSound('assets/beat.mp3');
 }
 
 function setup() {
