@@ -73,6 +73,7 @@ function preload() {
 function setup() {
   createCanvas(1920, 1080);
   
+  noCursor();
   smooth();
   noStroke();
   // heartbeat.setVolume(0.8);
